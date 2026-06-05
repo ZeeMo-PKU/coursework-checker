@@ -43,6 +43,71 @@ function extractSnippets(bodyText) {
     .slice(0, 8);
 }
 
+function extractDueDate(bodyText) {
+  const text = clean(bodyText);
+  const patterns = [
+    /到期日期\s*([0-9]{4}年[^满提交]{1,40}(?:上午|下午)?\s*[0-9:：]{1,8})/,
+    /截止(?:日期|时间)?(?:是|为|：|:)?\s*[【\[]?([0-9]{4}年[^】\]。；;]{1,45})/,
+    /截止时间(?:是|为|：|:)?\s*([^。；;]{1,45})/,
+    /([0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}\s*(?:上午|下午|中午|晚上|晚)?\s*[0-9:：]{1,8})/,
+    /([0-9]{1,2}\s*月\s*[0-9]{1,2}\s*日\s*(?:上午|下午|中午|晚上|晚)?\s*[0-9:：]{1,8})/
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return clean(match[1]);
+  }
+  return "";
+}
+
+function compactCourseName(courseName) {
+  return courseName.replace(/\(\d{2}-\d{2}学年第\d学期\)/g, "").trim();
+}
+
+function formatStatus(status) {
+  return {
+    open_or_missing: "未交/待交",
+    submitted: "已交",
+    access_denied: "无权限",
+    empty: "空",
+    unknown: "不确定"
+  }[status] || status;
+}
+
+function shortEvidence(item) {
+  const snippets = item.snippets || [];
+  const useful = snippets.find((snippet) => /到期日期|截止|满分|请提交|上载作业|复查提交历史记录/.test(snippet));
+  if (!useful) return "";
+  return useful
+    .replace(/.*?(到期日期|截止|满分|请提交|上载作业|复查提交历史记录)/, "$1")
+    .slice(0, 90);
+}
+
+function buildTodoRows(findings) {
+  return findings
+    .filter((item) => item.status === "open_or_missing")
+    .map((item) => ({
+      course: compactCourseName(item.courseName),
+      name: item.name,
+      due: item.dueDate || "未识别",
+      status: formatStatus(item.status),
+      note: shortEvidence(item)
+    }));
+}
+
+function printTodoTable(findings) {
+  const rows = buildTodoRows(findings);
+  console.log("\n=== 可能没交 / 待处理 ===");
+  if (!rows.length) {
+    console.log("无");
+    return;
+  }
+  rows.forEach((row, index) => {
+    console.log(`${index + 1}. [${row.course}] ${row.name}`);
+    console.log(`   截止: ${row.due}`);
+    if (row.note) console.log(`   说明: ${row.note}`);
+  });
+}
+
 async function selectCampusCardLogin(page) {
   const campusCard = page.getByText("校园卡用户", { exact: true }).first();
   if ((await campusCard.count()) === 0) return false;
@@ -247,12 +312,25 @@ function renderMarkdown({ portalUrl, generatedAt, courses, findings, aiSummary }
   const submitted = findings.filter((item) => item.status === "submitted");
   const uncertain = findings.filter((item) => !["open_or_missing", "submitted"].includes(item.status));
 
+  const todoTable = missing.length
+    ? [
+        "| # | Course | Item | Due | Note |",
+        "|---|---|---|---|---|",
+        ...buildTodoRows(findings).map(
+          (row, index) =>
+            `| ${index + 1} | ${row.course} | ${row.name} | ${row.due} | ${row.note.replace(/\|/g, "/")} |`
+        )
+      ].join("\n")
+    : "No likely missing/open items found.\n\n未发现明显未提交/开放中的项目。";
+
   const section = (items) =>
     items.length
       ? items
           .map((item) => {
-            const snippets = item.snippets.map((s) => `  - ${s}`).join("\n");
-            return `- ${item.courseName} / ${item.name}\n  - 状态: ${item.status}\n${snippets || "  - 无摘要"}`;
+            const snippets = item.snippets.slice(0, 3).map((s) => `  - ${s}`).join("\n");
+            return `- ${item.courseName} / ${item.name}\n  - Status: ${formatStatus(item.status)}\n  - Due: ${
+              item.dueDate || "未识别"
+            }\n${snippets || "  - 无摘要"}`;
           })
           .join("\n")
       : "- 无";
@@ -264,19 +342,23 @@ function renderMarkdown({ portalUrl, generatedAt, courses, findings, aiSummary }
 - Courses scanned: ${courses.length}
 - Assignment pages scanned: ${findings.length}
 
+## Quick Todo / 快速待办
+
+${todoTable}
+
 ## AI Summary
 
 ${aiSummary || "未启用 API Key，总结由规则生成。"}
 
-## Likely Missing Or Open
+## Details: Missing Or Open
 
 ${section(missing)}
 
-## Submitted
+## Details: Submitted
 
 ${section(submitted)}
 
-## Uncertain
+## Details: Uncertain
 
 ${section(uncertain)}
 `;
@@ -343,6 +425,7 @@ async function main() {
       courseName,
       name: raw.name,
       status,
+      dueDate: extractDueDate(raw.bodyText),
       title: raw.title,
       url: raw.url,
       requestedUrl: raw.requestedUrl,
@@ -368,13 +451,7 @@ async function main() {
   await fs.writeFile(jsonPath, JSON.stringify(report, null, 2), "utf8");
   await fs.writeFile(mdPath, renderMarkdown(report), "utf8");
 
-  const missing = findings.filter((item) => item.status === "open_or_missing");
-  console.log("\n可能未提交/仍开放的项目：");
-  for (const item of missing) {
-    console.log(`- ${item.courseName} / ${item.name}`);
-    for (const snippet of item.snippets.slice(0, 2)) console.log(`  ${snippet}`);
-  }
-  if (!missing.length) console.log("- 无");
+  printTodoTable(findings);
   console.log(`\n报告已保存：${mdPath}`);
   console.log(`原始数据：${jsonPath}`);
   console.log("浏览器保持打开，方便你复核。关闭浏览器即可结束。");
