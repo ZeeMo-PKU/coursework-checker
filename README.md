@@ -49,10 +49,38 @@ Requirements:
 - Node.js 18 or newer
 - npm
 
-安装依赖：
+If you cloned the repository from GitHub:
 
 ```powershell
+git clone https://github.com/ZeeMo-PKU/coursework-checker.git
 cd coursework-checker
+npm install
+npx playwright install chromium
+```
+
+If you are using the local copy on this machine:
+
+```powershell
+cd /d C:\Users\贾镕旭\Documents\MyGo\coursework-checker
+npm install
+npx playwright install chromium
+```
+
+中文安装说明：
+
+如果是从 GitHub 克隆：
+
+```powershell
+git clone https://github.com/ZeeMo-PKU/coursework-checker.git
+cd coursework-checker
+npm install
+npx playwright install chromium
+```
+
+如果是在这台电脑上使用已经创建好的本地目录：
+
+```powershell
+cd /d C:\Users\贾镕旭\Documents\MyGo\coursework-checker
 npm install
 npx playwright install chromium
 ```
@@ -62,6 +90,10 @@ npx playwright install chromium
 ```powershell
 npm start
 ```
+
+If `npm` prints `ENOENT Could not read package.json`, you are in the wrong directory. Run `cd` into the repository folder first.
+
+如果看到 `ENOENT Could not read package.json`，说明当前终端目录不在本项目里。先用 `cd` 进入仓库目录，再运行 `npm install` 或 `npm start`。
 
 The program will ask for:
 
