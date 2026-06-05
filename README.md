@@ -117,6 +117,10 @@ If the page requires captcha, complete login in the visible browser window, then
 
 如果出现验证码，请在打开的浏览器窗口中手动完成登录，然后回到终端按 Enter。
 
+On the PKU teaching-site login page, the checker tries to choose `校园卡用户` automatically before filling the login form. If the page layout changes, choose `校园卡用户` manually in the visible browser and continue.
+
+在北大教学网登录页，程序会默认尝试选择 `校园卡用户` 后再填写登录表单。如果页面布局变化导致自动选择失败，请在可见浏览器里手动点击 `校园卡用户`。
+
 ## Output / 输出
 
 Reports are written to `reports/`:

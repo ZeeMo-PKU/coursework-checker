@@ -61,10 +61,26 @@ async function askHidden(rl, question) {
   }
 }
 
+async function selectCampusCardLogin(page) {
+  const campusCard = page.getByText("校园卡用户", { exact: true }).first();
+  if ((await campusCard.count()) === 0) return false;
+  if (!(await campusCard.isVisible().catch(() => false))) return false;
+
+  await campusCard.click({ timeout: 5000 }).catch(() => {});
+  await page.waitForLoadState("domcontentloaded", { timeout: 10000 }).catch(() => {});
+  await sleep(500);
+  return true;
+}
+
 async function maybeLogin(page, username, password) {
   await page.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
   const visibleText = clean(await page.locator("body").innerText({ timeout: 5000 }).catch(() => ""));
   if (!/登录|用户名|密码|验证码|login|password/i.test(visibleText)) return;
+
+  if (/校园卡用户/.test(visibleText)) {
+    const selected = await selectCampusCardLogin(page);
+    if (selected) console.log("已选择“校园卡用户”登录方式。");
+  }
 
   const usernameLocators = [
     'input[name="user_id"]',
