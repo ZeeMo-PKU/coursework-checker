@@ -139,13 +139,57 @@ async function collectCurrentCourses(page) {
       text: cleanLocal(a.innerText || a.textContent),
       href: a.href
     }));
-    return links
-      .filter((link) => /25-26学年第[23]学期/.test(link.text) && /launcher\?type=Course/.test(link.href))
-      .map((link) => ({
+    const courseLinks = links.filter(
+      (link) => /launcher\?type=Course/.test(link.href) && /学年第\d学期/.test(link.text)
+    );
+    const currentHeading = Array.from(document.querySelectorAll("h1,h2,h3,h4,h5")).find((heading) =>
+      /当前学期课程/.test(cleanLocal(heading.innerText || heading.textContent))
+    );
+    if (!currentHeading) {
+      return courseLinks.map((link) => ({
         name: link.text.replace(/^\S+:\s*/, ""),
         href: link.href
       }));
+    }
+
+    const currentContainer = currentHeading.parentElement || document.body;
+    const currentLinks = Array.from(currentContainer.querySelectorAll("a"))
+      .map((a) => ({
+        text: cleanLocal(a.innerText || a.textContent),
+        href: a.href
+      }))
+      .filter((link) => /launcher\?type=Course/.test(link.href));
+
+    return (currentLinks.length ? currentLinks : courseLinks).map((link) => ({
+      name: link.text.replace(/^\S+:\s*/, ""),
+      href: link.href
+    }));
   });
+}
+
+async function ensureCoursesLoaded(page, portalUrl) {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const courses = await collectCurrentCourses(page);
+    if (courses.length > 0) return courses;
+
+    const title = await page.title().catch(() => "");
+    const url = page.url();
+    console.log(`没有在当前页面发现课程链接。当前页面：${title || "(无标题)"} ${url}`);
+
+    if (attempt === 1) {
+      await page.goto(portalUrl, { waitUntil: "domcontentloaded", timeout: 30000 }).catch(() => {});
+      await sleep(1500);
+      continue;
+    }
+
+    const rl = readline.createInterface({ input, output });
+    await rl.question(
+      "请在打开的浏览器里确认已经登录，并进入“我的主页(My Page)”或“北大课程(PKU Courses)”后按 Enter 重试..."
+    );
+    rl.close();
+    await page.waitForLoadState("domcontentloaded", { timeout: 10000 }).catch(() => {});
+  }
+  return [];
 }
 
 async function scanCourseHome(page, course) {
@@ -319,8 +363,11 @@ async function main() {
   await page.goto(portalUrl, { waitUntil: "domcontentloaded", timeout: 30000 }).catch(() => {});
   await sleep(1000);
 
-  const courses = await collectCurrentCourses(page);
+  const courses = await ensureCoursesLoaded(page, portalUrl);
   console.log(`发现当前课程 ${courses.length} 门。`);
+  if (courses.length === 0) {
+    throw new Error("没有发现课程，扫描已停止。请确认浏览器已经登录并停留在教学网课程门户页。");
+  }
 
   const courseHomes = [];
   const listPages = [];

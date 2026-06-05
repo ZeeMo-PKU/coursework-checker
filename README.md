@@ -121,6 +121,10 @@ On the PKU teaching-site login page, the checker tries to choose `校园卡用�
 
 在北大教学网登录页，程序会默认尝试选择 `校园卡用户` 后再填写登录表单。如果页面布局变化导致自动选择失败，请在可见浏览器里手动点击 `校园卡用户`。
 
+If the checker cannot find any courses, it will no longer report "no homework" directly. It will ask you to confirm the browser is logged in and on `我的主页(My Page)` or `北大课程(PKU Courses)`, then press Enter to retry.
+
+如果程序没有发现任何课程，它不会直接报告“无作业”。它会要求你确认浏览器已经登录，并进入 `我的主页(My Page)` 或 `北大课程(PKU Courses)`，然后按 Enter 重试。
+
 ## Output / 输出
 
 Reports are written to `reports/`:
