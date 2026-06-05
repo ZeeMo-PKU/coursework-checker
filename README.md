@@ -122,14 +122,14 @@ Reports are written to `reports/`:
 - `coursework-*.md`: readable report
 - `coursework-*.json`: raw scan data
 
-The terminal and Markdown report show a short `Quick Todo / 快速待办` section first. Detailed page evidence is kept later in the report.
+The terminal and Markdown report show a short `Quick Todo / 快速待办` section first with only the item name and due date. Detailed page evidence is kept later in the report.
 
 报告会保存到 `reports/`：
 
 - `coursework-*.md`：可读报告
 - `coursework-*.json`：原始扫描数据
 
-终端和 Markdown 报告会先显示简短的 `Quick Todo / 快速待办`，详细页面证据放在报告后面。
+终端和 Markdown 报告会先显示简短的 `Quick Todo / 快速待办`，只包含作业名和截止时间；详细页面证据放在报告后面。
 
 ## Status Rules / 状态判断规则
 

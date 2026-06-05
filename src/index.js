@@ -73,15 +73,6 @@ function formatStatus(status) {
   }[status] || status;
 }
 
-function shortEvidence(item) {
-  const snippets = item.snippets || [];
-  const useful = snippets.find((snippet) => /到期日期|截止|满分|请提交|上载作业|复查提交历史记录/.test(snippet));
-  if (!useful) return "";
-  return useful
-    .replace(/.*?(到期日期|截止|满分|请提交|上载作业|复查提交历史记录)/, "$1")
-    .slice(0, 90);
-}
-
 function buildTodoRows(findings) {
   return findings
     .filter((item) => item.status === "open_or_missing")
@@ -89,8 +80,7 @@ function buildTodoRows(findings) {
       course: compactCourseName(item.courseName),
       name: item.name,
       due: item.dueDate || "未识别",
-      status: formatStatus(item.status),
-      note: shortEvidence(item)
+      status: formatStatus(item.status)
     }));
 }
 
@@ -104,7 +94,6 @@ function printTodoTable(findings) {
   rows.forEach((row, index) => {
     console.log(`${index + 1}. [${row.course}] ${row.name}`);
     console.log(`   截止: ${row.due}`);
-    if (row.note) console.log(`   说明: ${row.note}`);
   });
 }
 
@@ -290,11 +279,10 @@ function renderMarkdown({ portalUrl, generatedAt, courses, findings }) {
 
   const todoTable = missing.length
     ? [
-        "| # | Course | Item | Due | Note |",
-        "|---|---|---|---|---|",
+        "| # | Course | Item | Due |",
+        "|---|---|---|---|",
         ...buildTodoRows(findings).map(
-          (row, index) =>
-            `| ${index + 1} | ${row.course} | ${row.name} | ${row.due} | ${row.note.replace(/\|/g, "/")} |`
+          (row, index) => `| ${index + 1} | ${row.course} | ${row.name} | ${row.due} |`
         )
       ].join("\n")
     : "No likely missing/open items found.\n\n未发现明显未提交/开放中的项目。";
