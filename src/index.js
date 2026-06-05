@@ -43,24 +43,6 @@ function extractSnippets(bodyText) {
     .slice(0, 8);
 }
 
-async function askHidden(rl, question) {
-  const mutableOutput = output;
-  const originalWrite = mutableOutput.write;
-  mutableOutput.write = function writeHidden(chunk, encoding, callback) {
-    const text = String(chunk);
-    if (text.includes(question)) {
-      return originalWrite.call(this, chunk, encoding, callback);
-    }
-    return originalWrite.call(this, "*".repeat(text.length), encoding, callback);
-  };
-  try {
-    return await rl.question(question);
-  } finally {
-    mutableOutput.write = originalWrite;
-    output.write("\n");
-  }
-}
-
 async function selectCampusCardLogin(page) {
   const campusCard = page.getByText("校园卡用户", { exact: true }).first();
   if ((await campusCard.count()) === 0) return false;
@@ -72,63 +54,19 @@ async function selectCampusCardLogin(page) {
   return true;
 }
 
-async function maybeLogin(page, username, password) {
+async function waitForManualLogin(page) {
   await page.waitForLoadState("domcontentloaded", { timeout: 15000 }).catch(() => {});
   const visibleText = clean(await page.locator("body").innerText({ timeout: 5000 }).catch(() => ""));
-  if (!/登录|用户名|密码|验证码|login|password/i.test(visibleText)) return;
 
   if (/校园卡用户/.test(visibleText)) {
     const selected = await selectCampusCardLogin(page);
     if (selected) console.log("已选择“校园卡用户”登录方式。");
   }
 
-  const usernameLocators = [
-    'input[name="user_id"]',
-    'input[name="username"]',
-    'input[id*="user" i]',
-    'input[type="text"]'
-  ];
-  const passwordLocators = [
-    'input[name="password"]',
-    'input[id*="pass" i]',
-    'input[type="password"]'
-  ];
-
-  for (const selector of usernameLocators) {
-    const loc = page.locator(selector).first();
-    if ((await loc.count()) > 0 && (await loc.isVisible().catch(() => false))) {
-      await loc.fill(username);
-      break;
-    }
-  }
-  for (const selector of passwordLocators) {
-    const loc = page.locator(selector).first();
-    if ((await loc.count()) > 0 && (await loc.isVisible().catch(() => false))) {
-      await loc.fill(password);
-      break;
-    }
-  }
-
-  const afterFill = clean(await page.locator("body").innerText({ timeout: 5000 }).catch(() => ""));
-  if (/验证码|captcha/i.test(afterFill)) {
-    console.log("页面需要验证码。请在打开的浏览器里手动完成验证码/登录，然后回到这里按 Enter。");
+  if (/登录|用户名|密码|验证码|login|password|账号登录|扫码登录/i.test(visibleText)) {
     const rl = readline.createInterface({ input, output });
-    await rl.question("完成登录后按 Enter 继续...");
+    await rl.question("请在打开的浏览器里手动完成登录，然后回到这里按 Enter 继续扫描...");
     rl.close();
-    return;
-  }
-
-  const submit = page
-    .locator('input[type="submit"], button[type="submit"], button, input[type="button"]')
-    .filter({ hasText: /登录|Log in|Login|提交/i })
-    .first();
-  if ((await submit.count()) > 0) {
-    await Promise.all([
-      page.waitForLoadState("domcontentloaded", { timeout: 20000 }).catch(() => {}),
-      submit.click()
-    ]);
-  } else {
-    await page.keyboard.press("Enter");
   }
 }
 
@@ -349,9 +287,7 @@ async function main() {
   console.log("提示：教学网入口 URL 可以直接按 Enter 使用默认值。");
   const portalAnswer = await rl.question(`教学网入口 URL（直接回车使用默认值）[${DEFAULT_PORTAL}]: `);
   const portalUrl = portalAnswer.trim() || DEFAULT_PORTAL;
-  const username = await rl.question("教学网账号: ");
-  const password = await askHidden(rl, "教学网密码: ");
-  const apiKey = await askHidden(rl, "OpenAI API Key（可留空，直接回车跳过）: ");
+  const apiKey = await rl.question("OpenAI API Key（可留空，直接回车跳过）: ");
   rl.close();
 
   const browser = await chromium.launch({ headless: false });
@@ -359,7 +295,7 @@ async function main() {
 
   console.log("打开教学网...");
   await page.goto(portalUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await maybeLogin(page, username.trim(), password);
+  await waitForManualLogin(page);
   await page.goto(portalUrl, { waitUntil: "domcontentloaded", timeout: 30000 }).catch(() => {});
   await sleep(1000);
 

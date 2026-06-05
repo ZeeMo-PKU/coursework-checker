@@ -10,7 +10,7 @@ This tool is designed to run on the user's own computer.
 
 本工具设计为只在使用者自己的电脑上运行：
 
-- Teaching-site account and password are entered locally and are not written to files.
+- Teaching-site account and password are entered only in the visible browser login page.
 - OpenAI API Key is optional and is not written to files.
 - The browser is visible, so users can handle captcha or multi-factor login manually.
 - The tool does not bypass captcha, access controls, or course permissions.
@@ -18,7 +18,7 @@ This tool is designed to run on the user's own computer.
 
 中文说明：
 
-- 教学网账号和密码只在本地输入，不写入文件。
+- 教学网账号和密码只在可见浏览器登录页中输入，程序不在终端收集账号密码。
 - OpenAI API Key 可留空，也不会写入文件。
 - 浏览器会可见，验证码或二次验证需要本人手动完成。
 - 程序不会绕过验证码、权限控制或课程访问限制。
@@ -98,8 +98,6 @@ If `npm` prints `ENOENT Could not read package.json`, you are in the wrong direc
 The program will ask for:
 
 - Course portal URL, press Enter to use the default PKU portal URL
-- Teaching-site account
-- Teaching-site password
 - OpenAI API Key, optional
 
 When the terminal stops at `Course portal URL` / `教学网入口 URL`, it is waiting for keyboard input. Press Enter to use the default URL.
@@ -107,19 +105,17 @@ When the terminal stops at `Course portal URL` / `教学网入口 URL`, it is wa
 程序会提示输入：
 
 - 教学网入口 URL，直接回车使用默认北大教学网入口
-- 教学网账号
-- 教学网密码
 - OpenAI API Key，可留空
 
 当终端停在 `教学网入口 URL` 这一行时，不是卡死，而是在等你输入。直接按 Enter 就会使用默认入口继续。
 
-If the page requires captcha, complete login in the visible browser window, then return to the terminal and press Enter.
+The checker does not ask for the teaching-site account or password in the terminal. It opens the browser and waits for you to complete account login, QR login, captcha, or multi-factor login manually. After login, return to the terminal and press Enter.
 
-如果出现验证码，请在打开的浏览器窗口中手动完成登录，然后回到终端按 Enter。
+程序不会在终端询问教学网账号或密码。它会打开浏览器，等待你在浏览器里手动完成账号登录、扫码登录、验证码或二次验证。登录完成后，回到终端按 Enter。
 
-On the PKU teaching-site login page, the checker tries to choose `校园卡用户` automatically before filling the login form. If the page layout changes, choose `校园卡用户` manually in the visible browser and continue.
+On the PKU teaching-site login page, the checker tries to choose `校园卡用户` automatically. If the page layout changes, choose `校园卡用户` manually in the visible browser and continue.
 
-在北大教学网登录页，程序会默认尝试选择 `校园卡用户` 后再填写登录表单。如果页面布局变化导致自动选择失败，请在可见浏览器里手动点击 `校园卡用户`。
+在北大教学网登录页，程序会默认尝试选择 `校园卡用户`。如果页面布局变化导致自动选择失败，请在可见浏览器里手动点击 `校园卡用户`。
 
 If the checker cannot find any courses, it will no longer report "no homework" directly. It will ask you to confirm the browser is logged in and on `我的主页(My Page)` or `北大课程(PKU Courses)`, then press Enter to retry.
 
