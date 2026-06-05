@@ -283,31 +283,7 @@ async function scanAssignment(page, courseName, assignmentLink) {
   );
 }
 
-async function summarizeWithOpenAI(apiKey, findings) {
-  if (!apiKey) return null;
-  const { default: OpenAI } = await import("openai");
-  const client = new OpenAI({ apiKey });
-  const compact = findings.map((item) => ({
-    course: item.courseName,
-    name: item.name,
-    status: item.status,
-    snippets: item.snippets
-  }));
-  const response = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: [
-      {
-        role: "system",
-        content:
-          "你是课程作业检查助手。只根据输入的扫描结果，用中文简洁总结哪些作业可能未提交、哪些已提交、哪些状态不确定。不要编造。"
-      },
-      { role: "user", content: JSON.stringify(compact, null, 2) }
-    ]
-  });
-  return response.output_text;
-}
-
-function renderMarkdown({ portalUrl, generatedAt, courses, findings, aiSummary }) {
+function renderMarkdown({ portalUrl, generatedAt, courses, findings }) {
   const missing = findings.filter((item) => item.status === "open_or_missing");
   const submitted = findings.filter((item) => item.status === "submitted");
   const uncertain = findings.filter((item) => !["open_or_missing", "submitted"].includes(item.status));
@@ -346,10 +322,6 @@ function renderMarkdown({ portalUrl, generatedAt, courses, findings, aiSummary }
 
 ${todoTable}
 
-## AI Summary
-
-${aiSummary || "未启用 API Key，总结由规则生成。"}
-
 ## Details: Missing Or Open
 
 ${section(missing)}
@@ -369,7 +341,6 @@ async function main() {
   console.log("提示：教学网入口 URL 可以直接按 Enter 使用默认值。");
   const portalAnswer = await rl.question(`教学网入口 URL（直接回车使用默认值）[${DEFAULT_PORTAL}]: `);
   const portalUrl = portalAnswer.trim() || DEFAULT_PORTAL;
-  const apiKey = await rl.question("OpenAI API Key（可留空，直接回车跳过）: ");
   rl.close();
 
   const browser = await chromium.launch({ headless: false });
@@ -440,14 +411,8 @@ async function main() {
   const generatedAt = new Date().toISOString();
   const jsonPath = path.join("reports", `coursework-${nowStamp()}.json`);
   const mdPath = jsonPath.replace(/\.json$/, ".md");
-  let aiSummary = null;
-  try {
-    aiSummary = await summarizeWithOpenAI(apiKey.trim(), findings);
-  } catch (error) {
-    aiSummary = `OpenAI 总结失败：${error.message}`;
-  }
 
-  const report = { generatedAt, portalUrl, courses, courseHomes, findings, aiSummary };
+  const report = { generatedAt, portalUrl, courses, courseHomes, findings };
   await fs.writeFile(jsonPath, JSON.stringify(report, null, 2), "utf8");
   await fs.writeFile(mdPath, renderMarkdown(report), "utf8");
 

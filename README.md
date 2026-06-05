@@ -11,7 +11,6 @@ This tool is designed to run on the user's own computer.
 本工具设计为只在使用者自己的电脑上运行：
 
 - Teaching-site account and password are entered only in the visible browser login page.
-- OpenAI API Key is optional and is not written to files.
 - The browser is visible, so users can handle captcha or multi-factor login manually.
 - The tool does not bypass captcha, access controls, or course permissions.
 - Reports are saved locally under `reports/`.
@@ -19,7 +18,6 @@ This tool is designed to run on the user's own computer.
 中文说明：
 
 - 教学网账号和密码只在可见浏览器登录页中输入，程序不在终端收集账号密码。
-- OpenAI API Key 可留空，也不会写入文件。
 - 浏览器会可见，验证码或二次验证需要本人手动完成。
 - 程序不会绕过验证码、权限控制或课程访问限制。
 - 报告只保存在本地 `reports/` 目录。
@@ -31,7 +29,6 @@ This tool is designed to run on the user's own computer.
 - Scans course menu entries related to assignments, quizzes, tests, labs, and submissions.
 - Checks Blackboard assignment pages using simple status rules.
 - Generates Markdown and JSON reports.
-- Optionally uses OpenAI to produce a Chinese summary of the scan results.
 
 中文功能：
 
@@ -40,7 +37,6 @@ This tool is designed to run on the user's own computer.
 - 扫描课程菜单中的作业、测验、实验、提交入口。
 - 根据 Blackboard 页面状态判断是否可能未提交。
 - 生成 Markdown 和 JSON 报告。
-- 可选使用 OpenAI API 生成中文摘要。
 
 ## Install / 安装
 
@@ -98,14 +94,12 @@ If `npm` prints `ENOENT Could not read package.json`, you are in the wrong direc
 The program will ask for:
 
 - Course portal URL, press Enter to use the default PKU portal URL
-- OpenAI API Key, optional
 
 When the terminal stops at `Course portal URL` / `教学网入口 URL`, it is waiting for keyboard input. Press Enter to use the default URL.
 
 程序会提示输入：
 
 - 教学网入口 URL，直接回车使用默认北大教学网入口
-- OpenAI API Key，可留空
 
 当终端停在 `教学网入口 URL` 这一行时，不是卡死，而是在等你输入。直接按 Enter 就会使用默认入口继续。
 
