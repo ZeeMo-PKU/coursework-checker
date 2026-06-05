@@ -286,11 +286,12 @@ ${section(uncertain)}
 
 async function main() {
   const rl = readline.createInterface({ input, output });
-  const portalAnswer = await rl.question(`教学网入口 URL [${DEFAULT_PORTAL}]: `);
+  console.log("提示：教学网入口 URL 可以直接按 Enter 使用默认值。");
+  const portalAnswer = await rl.question(`教学网入口 URL（直接回车使用默认值）[${DEFAULT_PORTAL}]: `);
   const portalUrl = portalAnswer.trim() || DEFAULT_PORTAL;
   const username = await rl.question("教学网账号: ");
   const password = await askHidden(rl, "教学网密码: ");
-  const apiKey = await askHidden(rl, "OpenAI API Key（可留空）: ");
+  const apiKey = await askHidden(rl, "OpenAI API Key（可留空，直接回车跳过）: ");
   rl.close();
 
   const browser = await chromium.launch({ headless: false });

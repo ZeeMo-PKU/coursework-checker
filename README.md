@@ -102,12 +102,16 @@ The program will ask for:
 - Teaching-site password
 - OpenAI API Key, optional
 
+When the terminal stops at `Course portal URL` / `教学网入口 URL`, it is waiting for keyboard input. Press Enter to use the default URL.
+
 程序会提示输入：
 
 - 教学网入口 URL，直接回车使用默认北大教学网入口
 - 教学网账号
 - 教学网密码
 - OpenAI API Key，可留空
+
+当终端停在 `教学网入口 URL` 这一行时，不是卡死，而是在等你输入。直接按 Enter 就会使用默认入口继续。
 
 If the page requires captcha, complete login in the visible browser window, then return to the terminal and press Enter.
 
